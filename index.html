@@ -1,260 +1,266 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>銀髮族點餐模擬練習</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { 
-            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; 
-            overscroll-behavior: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-active:active { transform: scale(0.95); }
-    </style>
-</head>
-<body class="bg-gray-100">
-    <div id="root"></div>
+import React, { useState } from 'react';
+import { ShoppingCart, ChevronLeft, Trash2, CheckCircle, Store, ShoppingBag, X, Plus, Minus } from 'lucide-react';
 
-    <!-- 載入核心庫 -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+const App = () => {
+  const [step, setStep] = useState('welcome'); // welcome, ordering, checkout, success
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [category, setCategory] = useState('主食');
+  const [cart, setCart] = useState([]);
+  const [takeout, setTakeout] = useState(null);
+  const [payment, setPayment] = useState(null);
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  const menu = {
+    '主食': [
+      { id: 1, name: '招牌排骨飯', price: 100, icon: '🍱' },
+      { id: 2, name: '清蒸鱈魚飯', price: 120, icon: '🐟' },
+      { id: 3, name: '養生蔬食飯', price: 90, icon: '🥬' },
+      { id: 4, name: '紅燒牛肉麵', price: 150, icon: '🍜' },
+    ],
+    '飲品': [
+      { id: 5, name: '古早味紅茶', price: 30, icon: '🥤' },
+      { id: 6, name: '現擠柳橙汁', price: 50, icon: '🍹' },
+      { id: 7, name: '熱美式咖啡', price: 45, icon: '☕' },
+    ],
+    '甜點': [
+      { id: 8, name: '手工鮮奶酪', price: 40, icon: '🍮' },
+      { id: 9, name: '紅豆紫米粥', price: 45, icon: '🥣' },
+    ]
+  };
 
-        function App() {
-            // 狀態管理
-            const [step, setStep] = useState('welcome'); // welcome, ordering, checkout, success
-            const [cart, setCart] = useState([]);
-            const [category, setCategory] = useState('主食');
-            const [isTakeout, setIsTakeout] = useState(null);
-            const [paymentMethod, setPaymentMethod] = useState(null);
+  const addToCart = (item) => {
+    const existing = cart.find(c => c.id === item.id);
+    if (existing) {
+      setCart(cart.map(c => c.id === item.id ? { ...c, count: c.count + 1 } : c));
+    } else {
+      setCart([...cart, { ...item, count: 1 }]);
+    }
+  };
 
-            const menu = {
-                '主食': [
-                    { id: 1, name: '招牌排骨飯', price: 100, emoji: '🍱' },
-                    { id: 2, name: '清蒸鱈魚飯', price: 120, emoji: '🐟' },
-                    { id: 3, name: '古早味滷肉飯', price: 50, emoji: '🍚' },
-                ],
-                '飲品': [
-                    { id: 4, name: '古早味紅茶', price: 30, emoji: '🥤' },
-                    { id: 5, name: '熱美式咖啡', price: 45, emoji: '☕' },
-                    { id: 6, name: '溫熱豆漿', price: 25, emoji: '🥛' },
-                ]
-            };
+  const decreaseCount = (id) => {
+    const item = cart.find(c => c.id === id);
+    if (item.count > 1) {
+      setCart(cart.map(c => c.id === id ? { ...c, count: c.count - 1 } : c));
+    } else {
+      removeFromCart(id);
+    }
+  };
 
-            const addToCart = (item) => {
-                const exist = cart.find(x => x.id === item.id);
-                if (exist) {
-                    setCart(cart.map(x => x.id === item.id ? { ...x, qty: x.qty + 1 } : x));
-                } else {
-                    setCart([...cart, { ...item, qty: 1 }]);
-                }
-            };
+  const removeFromCart = (id) => {
+    setCart(cart.filter(c => c.id !== id));
+  };
 
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const totalCount = cart.reduce((sum, item) => sum + item.count, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.count), 0);
 
-            // 1. 歡迎頁面
-            if (step === 'welcome') {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-blue-600 text-white text-center">
-                        <div className="mb-8">
-                            <span className="text-8xl">🍱</span>
-                        </div>
-                        <h1 className="text-5xl font-black mb-4">點餐模擬練習</h1>
-                        <p className="text-xl opacity-90 mb-12 text-blue-100">簡單按一按，練習自己點餐</p>
-                        <button 
-                            onClick={() => setStep('ordering')}
-                            className="bg-yellow-400 text-blue-900 text-3xl font-black py-6 px-16 rounded-full shadow-2xl btn-active"
-                        >
-                            按這裡開始
-                        </button>
+  // 歡迎畫面
+  if (step === 'welcome') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50 p-6 text-center">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full">
+          <h1 className="text-4xl font-bold text-blue-600 mb-6">點餐練習系統</h1>
+          <p className="text-xl text-gray-600 mb-8 leading-relaxed">這是一個專為練習點餐設計的介面，別擔心按錯，讓我們開始吧！</p>
+          <button 
+            onClick={() => setStep('ordering')}
+            className="bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-5 px-10 rounded-2xl shadow-lg w-full transition active:scale-95"
+          >
+            按我開始點餐
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 成功畫面
+  if (step === 'success') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-green-50 p-6 text-center">
+        <CheckCircle size={120} className="text-green-500 mb-6" />
+        <h2 className="text-4xl font-bold text-gray-800 mb-4">點餐成功！</h2>
+        <p className="text-2xl text-gray-600 mb-8">做得好！您已經學會如何操作了。</p>
+        <button 
+          onClick={() => { setCart([]); setStep('welcome'); setPayment(null); setTakeout(null); }}
+          className="bg-gray-800 text-white text-xl font-bold py-4 px-12 rounded-full"
+        >
+          重新練習一次
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-100 font-sans">
+      {/* 頁首 */}
+      <div className="bg-white border-b p-4 flex justify-between items-center shadow-sm">
+        <h2 className="text-2xl font-black text-gray-800">安心餐廳</h2>
+        {step === 'checkout' && (
+          <button onClick={() => setStep('ordering')} className="flex items-center text-blue-600 font-bold text-lg">
+            <ChevronLeft /> 返回修改
+          </button>
+        )}
+      </div>
+
+      {step === 'ordering' ? (
+        <>
+          <div className="flex flex-1 overflow-hidden">
+            {/* 左側類別選單 */}
+            <div className="w-28 bg-gray-200 flex flex-col">
+              {Object.keys(menu).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(cat)}
+                  className={`flex-1 text-xl font-bold transition-all ${category === cat ? 'bg-white text-blue-600 border-r-4 border-blue-500' : 'text-gray-500'}`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* 右側餐點列表 */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {menu[category].map(item => (
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between border border-gray-200">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-5xl">{item.icon}</span>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800">{item.name}</h3>
+                      <p className="text-red-500 font-bold text-xl">${item.price}</p>
                     </div>
-                );
-            }
+                  </div>
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="bg-orange-500 text-white px-6 py-3 rounded-xl text-xl font-black shadow-md active:bg-orange-700"
+                  >
+                    點餐
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            // 2. 點餐頁面
-            if (step === 'ordering') {
-                return (
-                    <div className="flex flex-col h-screen max-w-md mx-auto bg-white overflow-hidden">
-                        {/* 頂部標題 */}
-                        <div className="bg-blue-600 text-white p-4 flex justify-between items-center shrink-0">
-                            <h2 className="text-2xl font-bold italic">安心大飯店</h2>
-                            <div className="bg-blue-800 px-3 py-1 rounded-full text-sm">點餐中</div>
-                        </div>
+          {/* 底部功能列 */}
+          <div className="bg-white p-4 border-t-2 border-gray-300 shadow-2xl flex items-center space-x-4">
+            <button 
+              onClick={() => setShowCartModal(true)}
+              className="flex-1 bg-gray-800 text-white py-4 rounded-xl flex items-center justify-center space-x-3 text-xl font-bold relative"
+            >
+              <ShoppingCart />
+              <span>點餐車 ({totalCount})</span>
+              {totalCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 border-white">{totalCount}</span>}
+            </button>
+            <button 
+              disabled={cart.length === 0}
+              onClick={() => setStep('checkout')}
+              className={`flex-1 py-4 rounded-xl text-xl font-bold ${cart.length > 0 ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-300 text-gray-500'}`}
+            >
+              去結帳 ❯
+            </button>
+          </div>
+        </>
+      ) : (
+        /* 結帳流程畫面 (內用外帶/支付) */
+        <div className="flex-1 overflow-y-auto p-6">
+          <h3 className="text-2xl font-bold mb-4">1. 選擇用餐方式</h3>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <button onClick={() => setTakeout(false)} className={`py-8 rounded-2xl border-4 flex flex-col items-center ${takeout === false ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
+              <Store size={48} className={takeout === false ? 'text-blue-500' : 'text-gray-400'} />
+              <span className="text-2xl font-bold mt-2">內用</span>
+            </button>
+            <button onClick={() => setTakeout(true)} className={`py-8 rounded-2xl border-4 flex flex-col items-center ${takeout === true ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
+              <ShoppingBag size={48} className={takeout === true ? 'text-blue-500' : 'text-gray-400'} />
+              <span className="text-2xl font-bold mt-2">外帶</span>
+            </button>
+          </div>
 
-                        {/* 主內容區 */}
-                        <div className="flex flex-1 overflow-hidden">
-                            {/* 左側選單 */}
-                            <div className="w-28 bg-gray-100 flex flex-col border-r border-gray-200 shrink-0">
-                                {Object.keys(menu).map(cat => (
-                                    <button 
-                                        key={cat} 
-                                        onClick={() => setCategory(cat)}
-                                        className={`flex-1 text-xl font-black transition-colors ${category === cat ? 'bg-white text-blue-600 border-l-8 border-blue-600' : 'text-gray-400'}`}
-                                    >
-                                        {cat}
-                                    </button>
-                                ))}
-                            </div>
+          <h3 className="text-2xl font-bold mb-4">2. 選擇付款方式</h3>
+          <div className="space-y-4 mb-8">
+            {['現金支付', '悠遊卡 / 信用卡', '行動支付 (LINE Pay)'].map(p => (
+              <button key={p} onClick={() => setPayment(p)} className={`w-full py-6 px-6 text-left rounded-2xl border-4 text-xl font-bold ${payment === p ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'}`}>
+                {payment === p ? '✅ ' : '⭕ '} {p}
+              </button>
+            ))}
+          </div>
 
-                            {/* 右側商品列表 */}
-                            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
-                                {menu[category].map(item => (
-                                    <div key={item.id} className="bg-white rounded-3xl p-4 shadow-sm flex items-center border-2 border-transparent hover:border-blue-200 transition-all">
-                                        <div className="text-5xl mr-4">{item.emoji}</div>
-                                        <div className="flex-1">
-                                            <div className="text-xl font-bold text-gray-800">{item.name}</div>
-                                            <div className="text-red-500 font-black text-2xl">${item.price}</div>
-                                        </div>
-                                        <button 
-                                            onClick={() => addToCart(item)}
-                                            className="bg-blue-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg btn-active"
-                                        >
-                                            <span className="text-3xl font-bold">+</span>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+          <div className="bg-white p-6 rounded-2xl shadow-inner mb-6">
+            <div className="flex justify-between items-center text-2xl font-black">
+              <span>應付總額</span>
+              <span className="text-red-600">${totalPrice}</span>
+            </div>
+          </div>
 
-                        {/* 底部購物車預覽區 */}
-                        <div className="p-4 bg-white border-t-4 border-gray-100 shadow-up">
-                            <div className="flex justify-between items-end mb-4 px-2">
-                                <div>
-                                    <span className="text-gray-500 text-lg block">總共：</span>
-                                    <span className="text-3xl font-black text-blue-600">${total}</span>
-                                </div>
-                                <div className="text-gray-400 text-sm">已選 {cart.length} 樣項目</div>
-                            </div>
-                            <button 
-                                onClick={() => {
-                                    console.log("切換至結帳畫面");
-                                    setStep('checkout');
-                                }}
-                                disabled={cart.length === 0}
-                                className={`w-full py-5 rounded-3xl text-3xl font-black transition-all shadow-xl btn-active ${cart.length > 0 ? 'bg-green-500 text-white animate-pulse' : 'bg-gray-300 text-gray-500'}`}
-                            >
-                                {cart.length === 0 ? '請先點餐' : '這是我要吃的！'}
-                            </button>
-                        </div>
+          <button 
+            disabled={!payment || takeout === null}
+            onClick={() => setStep('success')}
+            className={`w-full py-6 rounded-3xl text-3xl font-black shadow-xl ${payment && takeout !== null ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-500'}`}
+          >
+            確認送出
+          </button>
+        </div>
+      )}
+
+      {/* 彈出視窗：點餐車內容管理 */}
+      {showCartModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="text-2xl font-black flex items-center"><ShoppingCart className="mr-2" /> 我的點餐車</h3>
+              <button onClick={() => setShowCartModal(false)} className="p-2 bg-gray-100 rounded-full"><X size={32} /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {cart.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-2xl text-gray-400">目前裡面空空的喔！</p>
+                </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-4xl">{item.icon}</span>
+                      <div>
+                        <p className="text-xl font-bold">{item.name}</p>
+                        <p className="text-gray-500 text-lg">${item.price}</p>
+                      </div>
                     </div>
-                );
-            }
-
-            // 3. 結帳與確認頁面
-            if (step === 'checkout') {
-                return (
-                    <div className="flex flex-col h-screen max-w-md mx-auto bg-white">
-                        <div className="bg-green-600 text-white p-4 flex items-center">
-                            <button onClick={() => setStep('ordering')} className="mr-4 text-3xl font-bold">←</button>
-                            <h2 className="text-2xl font-bold text-center flex-1 mr-8">最後確認</h2>
-                        </div>
-
-                        <div className="flex-1 p-6 overflow-y-auto space-y-8 bg-gray-50">
-                            {/* 訂單明細 */}
-                            <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-200">
-                                <h3 className="text-gray-400 font-bold mb-3 border-b pb-2">我的點餐內容</h3>
-                                {cart.map(item => (
-                                    <div key={item.id} className="flex justify-between items-center mb-2">
-                                        <span className="text-xl font-bold text-gray-700">{item.name} x {item.qty}</span>
-                                        <span className="text-lg text-gray-500">${item.price * item.qty}</span>
-                                    </div>
-                                ))}
-                                <div className="text-right text-2xl font-black text-red-600 mt-4 border-t pt-2">
-                                    總額：${total}
-                                </div>
-                            </div>
-
-                            {/* 取餐方式 */}
-                            <div>
-                                <h3 className="text-2xl font-black mb-4 flex items-center">
-                                    <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">1</span>
-                                    在哪裡吃？
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button 
-                                        onClick={() => setIsTakeout(false)}
-                                        className={`py-8 rounded-3xl border-4 text-2xl font-bold btn-active ${isTakeout === false ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-inner' : 'border-gray-200 text-gray-400 bg-white'}`}
-                                    >
-                                        這裡吃
-                                    </button>
-                                    <button 
-                                        onClick={() => setIsTakeout(true)}
-                                        className={`py-8 rounded-3xl border-4 text-2xl font-bold btn-active ${isTakeout === true ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-inner' : 'border-gray-200 text-gray-400 bg-white'}`}
-                                    >
-                                        帶回家
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* 付款方式 */}
-                            <div>
-                                <h3 className="text-2xl font-black mb-4 flex items-center">
-                                    <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center mr-2 text-sm">2</span>
-                                    怎麼付錢？
-                                </h3>
-                                <div className="space-y-3">
-                                    {['付現金', '悠遊卡'].map(p => (
-                                        <button 
-                                            key={p} 
-                                            onClick={() => setPaymentMethod(p)}
-                                            className={`w-full py-6 px-8 text-left rounded-3xl border-4 text-2xl font-bold btn-active ${paymentMethod === p ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 text-gray-400 bg-white'}`}
-                                        >
-                                            {paymentMethod === p ? '✅ ' : '⭕ '} {p}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 送出按鈕 */}
-                        <div className="p-6 bg-white border-t border-gray-100">
-                            <button 
-                                onClick={() => setStep('success')}
-                                disabled={!paymentMethod || isTakeout === null}
-                                className={`w-full py-6 rounded-full text-3xl font-black transition-all shadow-xl btn-active ${paymentMethod && isTakeout !== null ? 'bg-orange-500 text-white shadow-orange-200' : 'bg-gray-300 text-gray-500'}`}
-                            >
-                                確定點餐！
-                            </button>
-                        </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center bg-white border-2 border-gray-300 rounded-full">
+                        <button onClick={() => decreaseCount(item.id)} className="p-3 text-gray-600"><Minus size={24} /></button>
+                        <span className="text-2xl font-bold px-2 w-8 text-center">{item.count}</span>
+                        <button onClick={() => addToCart(item)} className="p-3 text-orange-500"><Plus size={24} /></button>
+                      </div>
+                      <button onClick={() => removeFromCart(item.id)} className="text-red-400 p-2"><Trash2 size={28} /></button>
                     </div>
-                );
-            }
+                  </div>
+                ))
+              )}
+            </div>
 
-            // 4. 完成頁面
-            if (step === 'success') {
-                return (
-                    <div className="flex flex-col items-center justify-center min-h-screen bg-green-50 p-6 text-center">
-                        <div className="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm border-8 border-green-200">
-                            <div className="text-9xl mb-8">🎉</div>
-                            <h2 className="text-5xl font-black text-green-600 mb-6">點好囉！</h2>
-                            <p className="text-2xl text-gray-600 mb-12 font-bold leading-relaxed">請等待服務員<br/>為您送餐</p>
-                            <button 
-                                onClick={() => {
-                                    setCart([]);
-                                    setStep('welcome');
-                                    setIsTakeout(null);
-                                    setPaymentMethod(null);
-                                }} 
-                                className="bg-gray-800 text-white text-2xl font-bold py-6 px-12 rounded-full w-full shadow-lg btn-active"
-                            >
-                                回首頁
-                            </button>
-                        </div>
-                    </div>
-                );
-            }
+            <div className="p-6 bg-gray-50 border-t border-gray-200">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-xl font-bold text-gray-600">總金額</span>
+                <span className="text-3xl font-black text-red-600">${totalPrice}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setShowCartModal(false)}
+                  className="py-5 bg-white border-4 border-gray-300 rounded-2xl text-xl font-bold text-gray-600"
+                >
+                  繼續點餐
+                </button>
+                <button 
+                  disabled={cart.length === 0}
+                  onClick={() => { setShowCartModal(false); setStep('checkout'); }}
+                  className={`py-5 rounded-2xl text-xl font-bold text-white shadow-md ${cart.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`}
+                >
+                  確認訂單
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-            return null;
-        }
-
-        // 啟動渲染
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+export default App;

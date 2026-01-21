@@ -1,266 +1,292 @@
-import React, { useState } from 'react';
-import { ShoppingCart, ChevronLeft, Trash2, CheckCircle, Store, ShoppingBag, X, Plus, Minus } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>烏龍拱 - 清新點餐系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4; /* 極淺綠背景 */
+        }
+        
+        /* 清新綠色調定義 */
+        .bg-brand-light { background-color: #dcfce7; } /* 淺綠區塊 */
+        .bg-brand-primary { background-color: #22c55e; } /* 主要按鈕綠 */
+        .bg-brand-hover { background-color: #16a34a; }
+        .text-brand-primary { color: #15803d; }
+        
+        /* 模式切換按鈕 */
+        .mode-btn-active {
+            background-color: #22c55e;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        /* 分類底線 */
+        .category-active {
+            color: #22c55e;
+            border-bottom: 3px solid #22c55e;
+        }
 
-const App = () => {
-  const [step, setStep] = useState('welcome'); // welcome, ordering, checkout, success
-  const [showCartModal, setShowCartModal] = useState(false);
-  const [category, setCategory] = useState('主食');
-  const [cart, setCart] = useState([]);
-  const [takeout, setTakeout] = useState(null);
-  const [payment, setPayment] = useState(null);
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-slate-700">
 
-  const menu = {
-    '主食': [
-      { id: 1, name: '招牌排骨飯', price: 100, icon: '🍱' },
-      { id: 2, name: '清蒸鱈魚飯', price: 120, icon: '🐟' },
-      { id: 3, name: '養生蔬食飯', price: 90, icon: '🥬' },
-      { id: 4, name: '紅燒牛肉麵', price: 150, icon: '🍜' },
-    ],
-    '飲品': [
-      { id: 5, name: '古早味紅茶', price: 30, icon: '🥤' },
-      { id: 6, name: '現擠柳橙汁', price: 50, icon: '🍹' },
-      { id: 7, name: '熱美式咖啡', price: 45, icon: '☕' },
-    ],
-    '甜點': [
-      { id: 8, name: '手工鮮奶酪', price: 40, icon: '🍮' },
-      { id: 9, name: '紅豆紫米粥', price: 45, icon: '🥣' },
-    ]
-  };
-
-  const addToCart = (item) => {
-    const existing = cart.find(c => c.id === item.id);
-    if (existing) {
-      setCart(cart.map(c => c.id === item.id ? { ...c, count: c.count + 1 } : c));
-    } else {
-      setCart([...cart, { ...item, count: 1 }]);
-    }
-  };
-
-  const decreaseCount = (id) => {
-    const item = cart.find(c => c.id === id);
-    if (item.count > 1) {
-      setCart(cart.map(c => c.id === id ? { ...c, count: c.count - 1 } : c));
-    } else {
-      removeFromCart(id);
-    }
-  };
-
-  const removeFromCart = (id) => {
-    setCart(cart.filter(c => c.id !== id));
-  };
-
-  const totalCount = cart.reduce((sum, item) => sum + item.count, 0);
-  const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.count), 0);
-
-  // 歡迎畫面
-  if (step === 'welcome') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50 p-6 text-center">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full">
-          <h1 className="text-4xl font-bold text-blue-600 mb-6">點餐練習系統</h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed">這是一個專為練習點餐設計的介面，別擔心按錯，讓我們開始吧！</p>
-          <button 
-            onClick={() => setStep('ordering')}
-            className="bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-5 px-10 rounded-2xl shadow-lg w-full transition active:scale-95"
-          >
-            按我開始點餐
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // 成功畫面
-  if (step === 'success') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-green-50 p-6 text-center">
-        <CheckCircle size={120} className="text-green-500 mb-6" />
-        <h2 className="text-4xl font-bold text-gray-800 mb-4">點餐成功！</h2>
-        <p className="text-2xl text-gray-600 mb-8">做得好！您已經學會如何操作了。</p>
-        <button 
-          onClick={() => { setCart([]); setStep('welcome'); setPayment(null); setTakeout(null); }}
-          className="bg-gray-800 text-white text-xl font-bold py-4 px-12 rounded-full"
-        >
-          重新練習一次
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col h-screen bg-gray-100 font-sans">
-      {/* 頁首 */}
-      <div className="bg-white border-b p-4 flex justify-between items-center shadow-sm">
-        <h2 className="text-2xl font-black text-gray-800">安心餐廳</h2>
-        {step === 'checkout' && (
-          <button onClick={() => setStep('ordering')} className="flex items-center text-blue-600 font-bold text-lg">
-            <ChevronLeft /> 返回修改
-          </button>
-        )}
-      </div>
-
-      {step === 'ordering' ? (
-        <>
-          <div className="flex flex-1 overflow-hidden">
-            {/* 左側類別選單 */}
-            <div className="w-28 bg-gray-200 flex flex-col">
-              {Object.keys(menu).map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`flex-1 text-xl font-bold transition-all ${category === cat ? 'bg-white text-blue-600 border-r-4 border-blue-500' : 'text-gray-500'}`}
-                >
-                  {cat}
+    <!-- 頂部導航 -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-green-100 shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-black flex items-center gap-2 text-brand-primary italic">
+                    <span class="text-3xl not-italic">🍜</span> 烏龍拱
+                </h1>
+                <button onclick="toggleCart()" class="relative p-2.5 bg-green-50 rounded-2xl text-green-600 border border-green-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span id="cart-badge" class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-white">0</span>
                 </button>
-              ))}
             </div>
 
-            {/* 右側餐點列表 */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4">
-              {menu[category].map(item => (
-                <div key={item.id} className="bg-white rounded-2xl shadow-sm p-5 flex items-center justify-between border border-gray-200">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-5xl">{item.icon}</span>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-800">{item.name}</h3>
-                      <p className="text-red-500 font-bold text-xl">${item.price}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="bg-orange-500 text-white px-6 py-3 rounded-xl text-xl font-black shadow-md active:bg-orange-700"
-                  >
-                    點餐
-                  </button>
-                </div>
-              ))}
+            <!-- 內用/外帶 區塊 (明亮綠色背景) -->
+            <div class="flex bg-brand-light p-1.5 rounded-2xl w-full max-w-md mx-auto">
+                <button onclick="setMode('dine-in')" id="mode-dine-in" class="flex-1 py-2.5 text-sm font-bold rounded-xl mode-btn-active transition-all duration-300">內用</button>
+                <button onclick="setMode('take-out')" id="mode-take-out" class="flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 text-green-700/70">外帶</button>
             </div>
-          </div>
-
-          {/* 底部功能列 */}
-          <div className="bg-white p-4 border-t-2 border-gray-300 shadow-2xl flex items-center space-x-4">
-            <button 
-              onClick={() => setShowCartModal(true)}
-              className="flex-1 bg-gray-800 text-white py-4 rounded-xl flex items-center justify-center space-x-3 text-xl font-bold relative"
-            >
-              <ShoppingCart />
-              <span>點餐車 ({totalCount})</span>
-              {totalCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 border-white">{totalCount}</span>}
-            </button>
-            <button 
-              disabled={cart.length === 0}
-              onClick={() => setStep('checkout')}
-              className={`flex-1 py-4 rounded-xl text-xl font-bold ${cart.length > 0 ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-300 text-gray-500'}`}
-            >
-              去結帳 ❯
-            </button>
-          </div>
-        </>
-      ) : (
-        /* 結帳流程畫面 (內用外帶/支付) */
-        <div className="flex-1 overflow-y-auto p-6">
-          <h3 className="text-2xl font-bold mb-4">1. 選擇用餐方式</h3>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <button onClick={() => setTakeout(false)} className={`py-8 rounded-2xl border-4 flex flex-col items-center ${takeout === false ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
-              <Store size={48} className={takeout === false ? 'text-blue-500' : 'text-gray-400'} />
-              <span className="text-2xl font-bold mt-2">內用</span>
-            </button>
-            <button onClick={() => setTakeout(true)} className={`py-8 rounded-2xl border-4 flex flex-col items-center ${takeout === true ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
-              <ShoppingBag size={48} className={takeout === true ? 'text-blue-500' : 'text-gray-400'} />
-              <span className="text-2xl font-bold mt-2">外帶</span>
-            </button>
-          </div>
-
-          <h3 className="text-2xl font-bold mb-4">2. 選擇付款方式</h3>
-          <div className="space-y-4 mb-8">
-            {['現金支付', '悠遊卡 / 信用卡', '行動支付 (LINE Pay)'].map(p => (
-              <button key={p} onClick={() => setPayment(p)} className={`w-full py-6 px-6 text-left rounded-2xl border-4 text-xl font-bold ${payment === p ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'}`}>
-                {payment === p ? '✅ ' : '⭕ '} {p}
-              </button>
-            ))}
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl shadow-inner mb-6">
-            <div className="flex justify-between items-center text-2xl font-black">
-              <span>應付總額</span>
-              <span className="text-red-600">${totalPrice}</span>
-            </div>
-          </div>
-
-          <button 
-            disabled={!payment || takeout === null}
-            onClick={() => setStep('success')}
-            className={`w-full py-6 rounded-3xl text-3xl font-black shadow-xl ${payment && takeout !== null ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-500'}`}
-          >
-            確認送出
-          </button>
         </div>
-      )}
 
-      {/* 彈出視窗：點餐車內容管理 */}
-      {showCartModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-2xl font-black flex items-center"><ShoppingCart className="mr-2" /> 我的點餐車</h3>
-              <button onClick={() => setShowCartModal(false)} className="p-2 bg-gray-100 rounded-full"><X size={32} /></button>
+        <!-- 分類 -->
+        <div class="container mx-auto px-4 flex gap-8 overflow-x-auto no-scrollbar">
+            <button onclick="filterCategory('all')" id="cat-all" class="category-active py-4 text-sm font-bold whitespace-nowrap">精選全菜單</button>
+            <button onclick="filterCategory('main')" id="cat-main" class="py-4 text-sm font-medium text-slate-400 whitespace-nowrap">美味主食</button>
+            <button onclick="filterCategory('drink')" id="cat-drink" class="py-4 text-sm font-medium text-slate-400 whitespace-nowrap">清爽飲品</button>
+            <button onclick="filterCategory('dessert')" id="cat-dessert" class="py-4 text-sm font-medium text-slate-400 whitespace-nowrap">手作甜點</button>
+        </div>
+    </header>
+
+    <!-- 菜單 -->
+    <main class="container mx-auto px-4 py-8">
+        <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- JS Rendered -->
+        </div>
+    </main>
+
+    <!-- 購物車側欄 -->
+    <div id="cart-drawer" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white flex flex-col shadow-2xl transition-transform">
+            <div class="p-6 border-b flex justify-between items-center bg-green-50/50">
+                <h3 class="text-xl font-bold text-green-800">您的選購清單</h3>
+                <button onclick="toggleCart()" class="text-slate-400 hover:text-slate-600 bg-white shadow-sm w-10 h-10 rounded-full flex items-center justify-center">✕</button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {cart.length === 0 ? (
-                <div className="text-center py-10">
-                  <p className="text-2xl text-gray-400">目前裡面空空的喔！</p>
+            <div id="cart-items" class="flex-grow overflow-y-auto p-6 space-y-6">
+                <!-- Items -->
+            </div>
+
+            <div class="p-8 border-t bg-white space-y-6">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">目前選擇：<span id="display-mode" class="text-green-600 font-bold ml-1">內用</span></span>
+                    <span id="cart-total" class="text-4xl font-black text-green-600">$0</span>
                 </div>
-              ) : (
-                cart.map(item => (
-                  <div key={item.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl border">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-4xl">{item.icon}</span>
-                      <div>
-                        <p className="text-xl font-bold">{item.name}</p>
-                        <p className="text-gray-500 text-lg">${item.price}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center bg-white border-2 border-gray-300 rounded-full">
-                        <button onClick={() => decreaseCount(item.id)} className="p-3 text-gray-600"><Minus size={24} /></button>
-                        <span className="text-2xl font-bold px-2 w-8 text-center">{item.count}</span>
-                        <button onClick={() => addToCart(item)} className="p-3 text-orange-500"><Plus size={24} /></button>
-                      </div>
-                      <button onClick={() => removeFromCart(item.id)} className="text-red-400 p-2"><Trash2 size={28} /></button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="p-6 bg-gray-50 border-t border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-xl font-bold text-gray-600">總金額</span>
-                <span className="text-3xl font-black text-red-600">${totalPrice}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => setShowCartModal(false)}
-                  className="py-5 bg-white border-4 border-gray-300 rounded-2xl text-xl font-bold text-gray-600"
-                >
-                  繼續點餐
+                <!-- 確認訂單按鈕 (亮綠色) -->
+                <button onclick="openPayment()" class="w-full bg-brand-primary hover:bg-brand-hover text-white py-5 rounded-[2rem] font-bold text-lg shadow-lg shadow-green-200 active:scale-95 transition-all">
+                    前往確認訂單
                 </button>
-                <button 
-                  disabled={cart.length === 0}
-                  onClick={() => { setShowCartModal(false); setStep('checkout'); }}
-                  className={`py-5 rounded-2xl text-xl font-bold text-white shadow-md ${cart.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`}
-                >
-                  確認訂單
-                </button>
-              </div>
             </div>
-          </div>
         </div>
-      )}
     </div>
-  );
-};
 
-export default App;
+    <!-- 付款彈窗 -->
+    <div id="payment-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-green-900/20 backdrop-blur-md"></div>
+        <div class="bg-white w-full max-w-sm rounded-[3rem] overflow-hidden relative shadow-2xl border border-green-50">
+            <div class="p-8 text-center bg-green-50/50">
+                <p class="text-sm font-bold text-green-600 mb-1">烏龍拱</p>
+                <h4 class="text-xl font-black text-slate-800">選擇支付方式</h4>
+            </div>
+            <div class="p-8 space-y-3">
+                <button onclick="completeOrder('現金付款')" class="w-full bg-slate-50 hover:bg-green-50 p-5 rounded-3xl flex items-center gap-4 transition-all border border-transparent hover:border-green-200">
+                    <span class="text-3xl">💵</span>
+                    <div class="text-left">
+                        <p class="font-bold text-slate-700">現場現金</p>
+                    </div>
+                </button>
+                <button onclick="completeOrder('信用卡')" class="w-full bg-slate-50 hover:bg-green-50 p-5 rounded-3xl flex items-center gap-4 transition-all border border-transparent hover:border-green-200">
+                    <span class="text-3xl">💳</span>
+                    <div class="text-left">
+                        <p class="font-bold text-slate-700">信用卡支付</p>
+                    </div>
+                </button>
+                <button onclick="closePayment()" class="w-full mt-4 text-slate-400 text-sm font-medium">再考慮看看</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功畫面 -->
+    <div id="order-success" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-green-500/90 backdrop-blur-xl"></div>
+        <div class="text-center relative">
+            <div class="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-white text-4xl font-black mb-4 italic">烏龍拱</h2>
+            <p class="text-white text-xl font-medium mb-12">訂單已成功送出！</p>
+            <button onclick="resetApp()" class="bg-slate-900 text-white px-14 py-4 rounded-full font-bold shadow-2xl">太棒了</button>
+        </div>
+    </div>
+
+    <script>
+        const menu = [
+            { id: 1, cat: 'main', name: '拱手招牌烏龍麵', price: 180, icon: '🍜' },
+            { id: 2, cat: 'main', name: '天婦羅炸蝦麵', price: 240, icon: '🍤' },
+            { id: 3, cat: 'main', name: '辛味噌牛肉麵', price: 220, icon: '🍲' },
+            { id: 4, cat: 'drink', name: '炭焙烏龍茶', price: 60, icon: '🍵' },
+            { id: 5, cat: 'drink', name: '柚子氣泡飲', price: 85, icon: '🍹' },
+            { id: 6, cat: 'drink', name: '靜岡抹茶拿鐵', price: 120, icon: '🥛' },
+            { id: 7, cat: 'dessert', name: '黑糖蕨餅', price: 80, icon: '🍡' },
+            { id: 8, cat: 'dessert', name: '水信玄餅', price: 70, icon: '🔮' },
+            { id: 9, cat: 'dessert', name: '宇治金時冰淇淋', price: 110, icon: '🍦' }
+        ];
+
+        let cart = [];
+        let orderMode = 'dine-in';
+        let currentCat = 'all';
+
+        function render() {
+            const container = document.getElementById('menu-container');
+            const items = currentCat === 'all' ? menu : menu.filter(m => m.cat === currentCat);
+            
+            container.innerHTML = items.map(item => `
+                <div class="group bg-white p-6 rounded-[2.5rem] flex flex-col gap-4 border border-green-50 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all duration-500 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-green-50 -mr-8 -mt-8 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
+                    <div class="flex items-center justify-between relative z-10">
+                        <div class="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-3xl shrink-0 group-hover:rotate-6 transition-transform">
+                            ${item.icon}
+                        </div>
+                        <div class="text-right">
+                             <p class="text-xs text-slate-400 font-bold mb-1 uppercase tracking-widest">${item.cat}</p>
+                             <h3 class="font-black text-slate-800 text-lg">${item.name}</h3>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4 relative z-10">
+                        <span class="text-green-600 font-black text-2xl tracking-tighter">$${item.price}</span>
+                        <!-- 加號按鈕 (清新亮綠色) -->
+                        <button onclick="addToCart(${item.id})" class="w-12 h-12 rounded-2xl bg-brand-primary hover:bg-brand-hover text-white flex items-center justify-center shadow-lg shadow-green-200 active:scale-90 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setMode(mode) {
+            orderMode = mode;
+            const di = document.getElementById('mode-dine-in');
+            const to = document.getElementById('mode-take-out');
+            
+            if (mode === 'dine-in') {
+                di.className = 'flex-1 py-2.5 text-sm font-bold rounded-xl mode-btn-active';
+                to.className = 'flex-1 py-2.5 text-sm font-bold rounded-xl text-green-700/70';
+            } else {
+                to.className = 'flex-1 py-2.5 text-sm font-bold rounded-xl mode-btn-active';
+                di.className = 'flex-1 py-2.5 text-sm font-bold rounded-xl text-green-700/70';
+            }
+            document.getElementById('display-mode').innerText = mode === 'dine-in' ? '內用' : '外帶';
+        }
+
+        function filterCategory(cat) {
+            currentCat = cat;
+            document.querySelectorAll('[id^="cat-"]').forEach(btn => {
+                btn.className = btn.id === `cat-${cat}` ? 'category-active py-4 text-sm font-bold whitespace-nowrap' : 'py-4 text-sm font-medium text-slate-400 whitespace-nowrap';
+            });
+            render();
+        }
+
+        function addToCart(id) {
+            const product = menu.find(p => p.id === id);
+            const inCart = cart.find(i => i.id === id);
+            if (inCart) inCart.qty++;
+            else cart.push({ ...product, qty: 1 });
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items');
+            const count = cart.reduce((s, i) => s + i.qty, 0);
+            const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            
+            document.getElementById('cart-badge').innerText = count;
+            document.getElementById('cart-badge').classList.toggle('hidden', count === 0);
+            document.getElementById('cart-total').innerText = `$${total}`;
+
+            if (cart.length === 0) {
+                list.innerHTML = `<div class="flex flex-col items-center justify-center py-24 text-slate-300"><p class="font-bold">籃子裡空空如也</p></div>`;
+                return;
+            }
+
+            list.innerHTML = cart.map(i => `
+                <div class="flex items-center justify-between group">
+                    <div class="flex items-center gap-4">
+                        <span class="text-3xl grayscale group-hover:grayscale-0 transition-all">${i.icon}</span>
+                        <div>
+                            <p class="font-bold text-slate-700">${i.name}</p>
+                            <p class="text-sm font-black text-green-500">$${i.price}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <button onclick="changeQty(${i.id}, -1)" class="w-8 h-8 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400 hover:text-green-500">－</button>
+                        <span class="font-black text-sm w-4 text-center text-slate-600">${i.qty}</span>
+                        <button onclick="changeQty(${i.id}, 1)" class="w-8 h-8 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400 hover:text-green-500">＋</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeQty(id, d) {
+            const i = cart.find(item => item.id === id);
+            if (i) {
+                i.qty += d;
+                if (i.qty <= 0) cart = cart.filter(item => item.id !== id);
+                updateCartUI();
+            }
+        }
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function openPayment() {
+            if (cart.length === 0) return;
+            toggleCart();
+            document.getElementById('payment-modal').classList.remove('hidden');
+        }
+
+        function closePayment() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        function completeOrder(method) {
+            document.getElementById('payment-modal').classList.add('hidden');
+            document.getElementById('order-success').classList.remove('hidden');
+        }
+
+        function resetApp() {
+            cart = [];
+            updateCartUI();
+            document.getElementById('order-success').classList.add('hidden');
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
